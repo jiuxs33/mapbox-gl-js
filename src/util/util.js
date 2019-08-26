@@ -92,8 +92,9 @@ export function wrap(n: number, min: number, max: number): number {
  */
 export function asyncAll<Item, Result>(
     array: Array<Item>,
-    fn: (item: Item, fnCallback: Callback<Result>) => void,
-    callback: Callback<Array<Result>>
+    fn: (item: Item, fnCallback: Callback<Result>,items) => void,
+    callback: Callback<Array<Result>>,
+    items: Array
 ) {
     if (!array.length) { return callback(null, []); }
     let remaining = array.length;
@@ -104,7 +105,7 @@ export function asyncAll<Item, Result>(
             if (err) error = err;
             results[i] = ((result: any): Result); // https://github.com/facebook/flow/issues/2123
             if (--remaining === 0) callback(error, results);
-        });
+        },items);
     });
 }
 

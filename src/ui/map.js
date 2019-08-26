@@ -129,7 +129,7 @@ const defaultOptions = {
     renderWorldCopies: true,
     refreshExpiredTiles: true,
     maxTileCacheSize: null,
-    localIdeographFontFamily: 'sans-serif',
+    //localIdeographFontFamily: 'sans-serif',
     transformRequest: null,
     accessToken: null,
     fadeDuration: 300,
@@ -965,7 +965,7 @@ class Map extends Camera {
      * @see [Change a map's style](https://www.mapbox.com/mapbox-gl-js/example/setstyle/)
      */
     setStyle(style: StyleSpecification | string | null, options?: {diff?: boolean} & StyleOptions) {
-        options = extend({}, { localIdeographFontFamily: this._localIdeographFontFamily}, options);
+        options = extend({}, { localIdeographFontFamily: defaultOptions.localIdeographFontFamily}, options);
 
         if ((options.diff !== false && options.localIdeographFontFamily === this._localIdeographFontFamily) && this.style && style) {
             this._diffStyle(style, options);

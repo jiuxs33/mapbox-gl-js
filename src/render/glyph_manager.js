@@ -10,6 +10,7 @@ import { AlphaImage } from '../util/image';
 import type {StyleGlyph} from '../style/style_glyph';
 import type {RequestManager} from '../util/mapbox';
 import type {Callback} from '../types/callback';
+import MD5 from 'md5';
 
 type Entry = {
     // null means we've requested the range, but the glyph wasn't included in the result.
@@ -23,6 +24,7 @@ class GlyphManager {
     localIdeographFontFamily: ?string;
     entries: {[string]: Entry};
     url: ?string;
+    finded:[];
 
     // exposed as statics to enable stubbing in unit tests
     static loadGlyphRange: typeof loadGlyphRange;
@@ -32,6 +34,7 @@ class GlyphManager {
         this.requestManager = requestManager;
         this.localIdeographFontFamily = localIdeographFontFamily;
         this.entries = {};
+        this.finded = [];
     }
 
     setURL(url: ?string) {
@@ -40,14 +43,16 @@ class GlyphManager {
 
     getGlyphs(glyphs: {[stack: string]: Array<number>}, callback: Callback<{[stack: string]: {[id: number]: ?StyleGlyph}}>) {
         const all = [];
-
+        const allids = [];
+        
         for (const stack in glyphs) {
             for (const id of glyphs[stack]) {
                 all.push({stack, id});
+                allids.push(id);
             }
         }
 
-        asyncAll(all, ({stack, id}, callback: Callback<{stack: string, id: number, glyph: ?StyleGlyph}>) => {
+        asyncAll(all, ({stack, id}, callback: Callback<{stack: string, id: number, glyph: ?StyleGlyph}>,items) => {
             let entry = this.entries[stack];
             if (!entry) {
                 entry = this.entries[stack] = {
@@ -55,34 +60,41 @@ class GlyphManager {
                     requests: {}
                 };
             }
-
             let glyph = entry.glyphs[id];
             if (glyph !== undefined) {
                 callback(null, {stack, id, glyph});
                 return;
             }
-
             glyph = this._tinySDF(entry, stack, id);
             if (glyph) {
-                entry.glyphs[id] = glyph;
                 callback(null, {stack, id, glyph});
                 return;
             }
-
-            const range = Math.floor(id / 256);
+            
+            
+            /*const range = Math.floor(id / 256);
             if (range * 256 > 65535) {
                 callback(new Error('glyphs > 65535 not supported'));
                 return;
-            }
-
-            let requests = entry.requests[range];
+            }*/
+            //let _range = MD5.update(allids.join("_")).digest('hex');
+            let _range = items.join("_");
+            let requests = entry.requests[_range];
             if (!requests) {
-                requests = entry.requests[range] = [];
+                requests = entry.requests[_range] = [];
+                let findfonts = [];
+                let temp_id = 0;
+                for (const font of items) {
+                     let f_id = font - temp_id;
+                    findfonts.push(f_id);
+                    temp_id = font;
+                }
+                let range = findfonts.join(',');
                 GlyphManager.loadGlyphRange(stack, range, (this.url: any), this.requestManager,
                     (err, response: ?{[number]: StyleGlyph | null}) => {
                         if (response) {
                             for (const id in response) {
-                                if (!this._doesCharSupportLocalGlyph(+id)) {
+                                if(!entry.glyphs[+id]){
                                     entry.glyphs[+id] = response[+id];
                                 }
                             }
@@ -90,7 +102,7 @@ class GlyphManager {
                         for (const cb of requests) {
                             cb(err, response);
                         }
-                        delete entry.requests[range];
+                        delete entry.requests[_range];
                     });
             }
 
@@ -118,17 +130,7 @@ class GlyphManager {
 
                 callback(null, result);
             }
-        });
-    }
-
-    _doesCharSupportLocalGlyph(id: number): boolean {
-        /* eslint-disable new-cap */
-        return !!this.localIdeographFontFamily &&
-            (isChar['CJK Unified Ideographs'](id) ||
-                isChar['Hangul Syllables'](id) ||
-                isChar['Hiragana'](id) ||
-                isChar['Katakana'](id));
-        /* eslint-enable new-cap */
+        },allids);
     }
 
     _tinySDF(entry: Entry, stack: string, id: number): ?StyleGlyph {
@@ -136,8 +138,12 @@ class GlyphManager {
         if (!family) {
             return;
         }
-
-        if (!this._doesCharSupportLocalGlyph(id)) {
+        /* eslint-disable new-cap */
+        if (!isChar['CJK Unified Ideographs'](id) &&
+            !isChar['Hangul Syllables'](id) &&
+            !isChar['Hiragana'](id) &&
+            !isChar['Katakana'](id)
+        ) { /* eslint-enable new-cap */
             return;
         }
 
