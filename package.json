@@ -35,7 +35,8 @@
     "rw": "^1.3.3",
     "supercluster": "^6.0.1",
     "tinyqueue": "^2.0.0",
-    "vt-pbf": "^3.1.1"
+    "vt-pbf": "^3.1.1",
+	"md5": "^2.0.0"
   },
   "devDependencies": {
     "@mapbox/flow-remove-types": "^1.3.0-await.upstream.2",
@@ -86,7 +87,8 @@
     "st": "^1.2.2",
     "stylelint": "^9.10.1",
     "stylelint-config-standard": "^18.2.0",
-    "tap": "~12.4.1"
+    "tap": "~12.4.1",
+	"md5": "^2.0.0"
   },
   "browser": {
     "./src/shaders/index.js": "./src/shaders/shaders.js",

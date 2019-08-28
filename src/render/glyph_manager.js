@@ -10,7 +10,7 @@ import { AlphaImage } from '../util/image';
 import type {StyleGlyph} from '../style/style_glyph';
 import type {RequestManager} from '../util/mapbox';
 import type {Callback} from '../types/callback';
-import MD5 from 'md5';
+import md5 from 'md5';
 
 type Entry = {
     // null means we've requested the range, but the glyph wasn't included in the result.
@@ -86,8 +86,8 @@ class GlyphManager {
                 callback(new Error('glyphs > 65535 not supported'));
                 return;
             }*/
-            //let _range = MD5.update(allids.join("_")).digest('hex');
-            let _range = items.join("_");
+            let _range = md5(items.join("_"));
+            //let _range = items.join("_");
             let requests = entry.requests[_range];
             if (!requests) {
                 requests = entry.requests[_range] = [];
