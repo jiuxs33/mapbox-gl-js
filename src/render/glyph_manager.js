@@ -46,9 +46,18 @@ class GlyphManager {
         const allids = [];
         
         for (const stack in glyphs) {
+            let entry = this.entries[stack];
+            
             for (const id of glyphs[stack]) {
                 all.push({stack, id});
-                allids.push(id);
+                if(entry){
+                    let glyph = entry.glyphs[id];
+                    if (glyph == undefined) {
+                        allids.push(id);
+                    }
+                }else{
+                    allids.push(id);
+                }
             }
         }
 
